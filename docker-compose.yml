@@ -1,0 +1,27 @@
+services:
+    wine_project:
+        image: zwhy2025/wine-docker:base
+        container_name: wine_container
+        privileged: true
+        working_dir: /workspace
+        environment:
+            - ACCEPT_EULA=Y
+            - PRIVACY_CONSENT=Y
+            - DISPLAY=${DISPLAY}
+            - QT_X11_NO_MITSHM=1
+        volumes:
+            - .:/workspace
+            - ./wxwork-files:/root/.deepinwine/Deepin-WXWork/drive_c/users/root/Documents/WXWork/
+            - ${HOME}/.Xauthority:/root/.Xauthority
+            - /tmp:/tmp
+            - /dev:/dev
+        tmpfs:
+            - /run
+            - /run/lock
+        network_mode: host
+        shm_size: '16g'
+        ulimits:
+            memlock: -1
+        tty: true
+        stdin_open: true
+        ipc: host

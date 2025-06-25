@@ -1,0 +1,6 @@
+# ignore file
+
+wxwork-files/
+.*
+
+!.gitignore
