@@ -1,6 +1,9 @@
 # Linux-WXWork 项目
 
 一个基于Docker的Wine环境项目，专门用于在Linux系统上运行企业微信等Windows应用程序。
+可拓展为其他Windows应用程序的运行环境,支持列表请访问: https://deepin-wine.i-m.dev/。
+
+本项目基于https://github.com/zq1997/deepin-wine 衍生而来,目的为提供一个完整的隔离的Docker化Wine环境。
 
 ## 📋 项目概述
 
@@ -15,22 +18,22 @@
 ## 🏗️ 项目结构
 
 ```
-wine-docker/
-├── env/                          # 环境安装脚本
+linux-wxwork/
+├── env/                         # 环境安装脚本
 │   ├── install_base.sh          # 基础系统包安装
 │   ├── install_dev.sh           # 开发工具安装
 │   ├── install_graphics.sh      # 图形界面支持
 │   ├── install_wine.sh          # Wine环境安装
 │   ├── install_wxwork.sh        # 企业微信安装
 │   └── setup_env.sh             # 环境设置
-├── tools/                        # 工具脚本
-│   └── run_wxwork.sh       # 智能运行脚本
-├── wxwork-files/                 # 企业微信数据目录
-│   ├── [用户ID]/                # 用户数据
-│   │   ├── Data/               # 应用数据
-│   │   ├── Cache/              # 缓存文件
-│   │   ├── Backup/             # 备份数据
-│   │   └── WeDrive/            # 企业网盘
+├── tools/                       # 工具脚本
+│   └── run_wxwork.sh            # 智能运行脚本
+├── wxwork-files/                # 企业微信数据目录
+│   ├── [用户ID]/                 # 用户数据
+│   │   ├── Data/                # 应用数据
+│   │   ├── Cache/               # 缓存文件
+│   │   ├── Backup/              # 备份数据
+│   │   └── WeDrive/             # 企业网盘
 │   ├── Global/                  # 全局配置
 │   ├── Profiles/                # 用户配置文件
 │   └── qtCef/                   # CEF浏览器引擎
@@ -54,11 +57,11 @@ wine-docker/
 
 1. **克隆项目**
    ```bash
-   git clone <repository-url>
-   cd wine-docker
+   git clone https://github.com/zwhy2025/linux-wxwork.git
+   cd linux-wxwork
    ```
 
-2. **运行智能安装脚本**
+2. **运行智能安装脚本(本地构建镜像)**
    ```bash
    sudo bash tools/run_wxwork.sh
    ```
@@ -68,25 +71,29 @@ wine-docker/
    - 构建Wine Docker镜像
    - 启动容器并运行企业微信
 
-3. **手动启动（可选）**
+3. **手动启动（从镜像仓库拉取镜像）**
+   笔者将镜像推送到docker hub，方便大家使用。
    ```bash
-   # 构建镜像
-   docker-compose build
+   # 拉取镜像
+   docker pull zwhy2025/wine-docker:base
    
    # 启动容器
-   docker-compose up -d
-   
+   docker compose up -d  # 或者 docker-compose up -d
+
    # 进入容器
    docker exec -it wine_container bash
-   
+
    # 运行企业微信
    wxwork
+   
+   # 或者直接运行企业微信
+   docker exec -it wine_container wxwork
    ```
 
 ## 🔧 配置说明
 
 ### Docker Compose配置
-
+   
 - **镜像**: `zwhy2025/wine-docker:base`
 - **容器名**: `wine_container`
 - **特权模式**: 启用（用于设备访问）
@@ -186,7 +193,7 @@ docker logs wine_container
 
 # 企业微信日志
 docker exec wine_container tail -f /root/.deepinwine/Deepin-WXWork/drive_c/users/root/Documents/WXWork/*/Data/log/*
-```
+```   
 
 ## 📝 注意事项
 
