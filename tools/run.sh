@@ -138,6 +138,23 @@ install_app_in_container() {
     }
 }
 
+# 在容器内升级已安装应用到源中最新版本（保留用户数据与配置）
+upgrade_app_in_container() {
+    local package="$1"
+    log_info "正在升级应用: ${package}"
+    # 普通 apt install 允许同时安装新依赖（如 v5 所需的 wine10/deepin-elf-verify），
+    # --only-upgrade 会因拒绝新依赖导致升级失败，故不使用；
+    # 镜像中 ubuntu 源路径 403 会阻断依赖安装，先修复源再 update/install
+    fix_apt_sources_in_container
+    docker exec "$CONTAINER_NAME" bash -c "export DEBIAN_FRONTEND=noninteractive && apt-get update -qq || true; apt-get install -y '$package'" || {
+        log_error "应用升级失败"
+        return 1
+    }
+    local installed_version
+    installed_version=$(docker exec "$CONTAINER_NAME" dpkg-query -W -f='${Version}' "$package" 2>/dev/null)
+    log_success "应用已升级: ${package} (版本: ${installed_version})"
+}
+
 # 在容器内运行应用
 run_app() {
     local short_name="$1"
@@ -293,6 +310,20 @@ main() {
     # 检查容器内是否已安装
     if ! check_app_installed_in_container "$package"; then
         install_app_in_container "$package" "$app_name" "$version"
+    elif [[ -n "$version" ]]; then
+        # 已安装时 -v 不生效：升级请直接运行（不带 -v），脚本会检测新版本并提示确认
+        log_info "应用已安装，-v 参数仅用于未安装时的初始版本选择；升级请直接运行 ${app_name}，检测到新版本时会提示确认"
+    elif [[ -z "$version" ]] && app_has_update_in_container "$package"; then
+        # 已安装旧版且未指定版本：询问用户是否升级（例如企业微信 v4 → v5）
+        log_info "检测到 ${app_name} 在源中有新版本"
+        local installed_version
+        installed_version=$(docker exec "$CONTAINER_NAME" dpkg-query -W -f='${Version}' "$package" 2>/dev/null)
+        read -rp "是否升级 ${app_name} 到源中的最新版本 (当前 ${installed_version})? [y/N]: " choice
+        if [[ "$choice" =~ ^[Yy]$ ]]; then
+            upgrade_app_in_container "$package" || log_warning "应用升级失败，继续使用现有版本运行"
+        else
+            log_info "已跳过升级，继续使用当前版本运行"
+        fi
     fi
     
     # 运行应用

@@ -3,7 +3,8 @@
     "package": "com.qq.weixin.work.deepin",
     "description": "企业微信，办公沟通、会议协作、文件传输",
     "versions": {
-      "v4": "https://com-store-packages.uniontech.com/appstorev20/pool/appstore/c/com.qq.weixin.work.deepin/com.qq.weixin.work.deepin_4.1.32.6005deepin11_amd64.deb"
+      "v4": "https://com-store-packages.uniontech.com/appstorev20/pool/appstore/c/com.qq.weixin.work.deepin/com.qq.weixin.work.deepin_4.1.32.6005deepin11_amd64.deb",
+      "v5": "https://com-store-packages.uniontech.com/appstorev23/pool/appstore/c/com.qq.weixin.work.deepin/com.qq.weixin.work.deepin_5.0.7.6005deepin11_amd64.deb"
     }
   },
   "wechat": {

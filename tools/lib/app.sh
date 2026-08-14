@@ -39,6 +39,8 @@ install_wine_environment() {
     fi
     
     log_info "安装 Wine 环境..."
+    # 镜像构建时 ubuntu 源路径多一层 /ubuntu/ 会 403，先修复再 apt
+    fix_apt_sources_in_container
     docker exec "$CONTAINER_NAME" bash -c "export DEBIAN_FRONTEND=noninteractive && apt update && apt install -y deepin-wine10-stable deepin-wine-helper" || {
         log_error "Wine 环境安装失败"
         return 1
@@ -177,10 +179,18 @@ install_app() {
             log_success "应用安装成功: ${package} (版本: ${installed_version})"
             
             # 验证版本
-            if [[ "$installed_version" == *"4."* ]]; then
-                log_success "已成功安装指定的 v4 版本"
-            elif [[ "$installed_version" == *"5."* ]]; then
-                log_warning "警告：安装的是 v5 版本，不是期望的 v4 版本"
+            if [[ "$version" == "v4" ]]; then
+                if [[ "$installed_version" == *"4."* ]]; then
+                    log_success "已成功安装指定的 v4 版本"
+                else
+                    log_warning "警告：请求 v4 但实际安装版本为 ${installed_version}"
+                fi
+            elif [[ "$version" == "v5" ]]; then
+                if [[ "$installed_version" == *"5."* ]]; then
+                    log_success "已成功安装指定的 v5 版本"
+                else
+                    log_warning "警告：请求 v5 但实际安装版本为 ${installed_version}"
+                fi
             fi
         else
             log_error "deb 包安装失败"
