@@ -219,6 +219,26 @@ check_app_installed_in_container() {
     docker exec "$CONTAINER_NAME" dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q "install ok installed"
 }
 
+# 修复容器内 ubuntu 源路径（镜像构建时多写了一层 /ubuntu/，导致 403 无法安装依赖；幂等）
+fix_apt_sources_in_container() {
+    docker exec "$CONTAINER_NAME" bash -c "sed -i 's|http://mirrors.ustc.edu.cn/ubuntu/ubuntu/|http://mirrors.ustc.edu.cn/ubuntu/|g' /etc/apt/sources.list"
+}
+
+# 检查容器内已安装应用是否有可用更新（已安装版本 < 源中最新版本）
+# 依赖 apt 源（deepin-wine.i-m.dev），未配置源时返回 1（视为无更新）
+# 注意：镜像/旧容器缓存的 apt 列表可能过期（重建容器后 candidate 仍为旧版），需先 update 刷新
+app_has_update_in_container() {
+    local package="$1"
+    docker exec "$CONTAINER_NAME" bash -c "
+        # 刷新 apt 列表后再比较，否则重建容器后 lists 过期会误判无更新；
+        # ubuntu 源 403 时 update 会非零退出，但 i-m.dev 源仍可刷新，故忽略错误
+        apt-get update -qq >/dev/null 2>&1 || true
+        installed=\$(dpkg-query -W -f='\${Version}' '$package' 2>/dev/null)
+        candidate=\$(apt-cache policy '$package' 2>/dev/null | awk '/Candidate:/{print \$2}')
+        [[ -n \"\$installed\" && -n \"\$candidate\" && \"\$installed\" != \"\$candidate\" ]] && echo update || echo no-update
+    " | grep -qx update
+}
+
 check_app_installed_local() {
     local package="$1"
     dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q "install ok installed"
